@@ -1,0 +1,27 @@
+id: exposed-metrics
+info:
+  name: Prometheus Metrics Endpoint Exposed
+  author: patrolman
+  severity: low
+  description: "The Prometheus metrics endpoint is exposed without authentication, disclosing real-time operational statistics and internal system metrics."
+  remediation: "Restrict access to the /metrics endpoint to authorized internal monitoring infrastructure."
+  classification:
+    cwe-id:
+      - CWE-200
+  tags: exposure,metrics,telemetry
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/metrics"
+    redirects: false
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "# HELP"
+          - "# TYPE"
+        condition: and

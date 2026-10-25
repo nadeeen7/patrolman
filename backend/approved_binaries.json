@@ -1,0 +1,12 @@
+{
+  "$comment": "SHA-256 pins for approved scanner binaries. PATROLMAN hashes the file on disk and never downloads or replaces it. An absent manifest, or an absent entry for a tool, leaves that tool unpinned (reported honestly); an unreadable manifest or digest is a hard error and execution is refused. Record a new digest here only after verifying the release archive against the checksums that upstream publishes for it.",
+  "subfinder": {
+    "sha256": "163c509636aaea3d333c5f3119fd9152cf661d7aef7212522509c14aa20475c6",
+    "archive": "subfinder_2.17.0_windows_amd64.zip",
+    "archive_sha256": "a3fd612928d591fb31c1e59a2e06055e364421ba32251e553073f5673a2d3103",
+    "release": "https://github.com/projectdiscovery/subfinder/releases/download/v2.17.0/subfinder_2.17.0_windows_amd64.zip",
+    "checksums": "https://github.com/projectdiscovery/subfinder/releases/download/v2.17.0/subfinder_2.17.0_checksums.txt",
+    "verified": "2026-10-14",
+    "note": "archive_sha256 matches the published subfinder_2.17.0_checksums.txt entry for this archive. Upstream publishes no signature or provenance attestation, so this proves the archive equals the published digest, not origin authenticity. The binary digest was recorded from the extracted tools/subfinder/subfinder.exe at this version (reported as '[INF] Current Version: v2.17.0')."
+  }
+}

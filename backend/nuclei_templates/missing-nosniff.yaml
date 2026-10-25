@@ -1,0 +1,21 @@
+id: ava-missing-nosniff
+info:
+  name: X-Content-Type-Options header missing
+  author: ava
+  severity: info
+  description: The response lacks the nosniff header; applicability requires manual review.
+  remediation: Set X-Content-Type-Options to nosniff where appropriate.
+http:
+  - method: GET
+    path:
+      - '{{BaseURL}}/'
+    redirects: false
+    matchers-condition: and
+    matchers:
+      - type: status
+        status: [200]
+      - type: word
+        part: header
+        words: ['x-content-type-options:']
+        case-insensitive: true
+        negative: true

@@ -1,0 +1,30 @@
+id: exposed-directory-listing
+info:
+  name: Directory Listing Enabled
+  author: patrolman
+  severity: medium
+  description: Directory listing was detected on the target server, exposing file paths and sensitive resources to unauthorized users.
+  remediation: Disable directory listing in the web server configuration.
+  classification:
+    cwe-id:
+      - CWE-548
+  tags: misconfig,exposure
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/ftp/"
+      - "{{BaseURL}}/ftp"
+    stop-at-first-match: true
+    redirects: false
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - '<title>listing directory'
+          - '<body class="directory">'
+          - '<h1><a href=".">~</a>'
+        condition: or

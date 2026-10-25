@@ -1,0 +1,15 @@
+{
+  "source": "https://github.com/projectdiscovery/nuclei-templates",
+  "retrieved": "2026-10-25",
+  "sha256": "7f45803f73ac6810b9b302df6be2c472a82d9164a7807328614efa83e6eac275",
+  "policy": "Reviewed, maintained, non-destructive detection templates for authorized local web assessment. GET requests only; global -dr enforces no redirects; callbacks and automatic updates disabled. Arbitrary unverified template paths are rejected.",
+  "templates": {
+    "http-missing-security-headers.yaml": "7f45803f73ac6810b9b302df6be2c472a82d9164a7807328614efa83e6eac275",
+    "cors-wildcard.yaml": "15f6fd243cff7196f469a6cfd25c952748c5534d7d7e3b71f7833e1d0a0fff93",
+    "directory-listing.yaml": "e11bdc9976deb609dcaab2a6014f1ab0ce9032ed38b5e642cda7dd6ded47c322",
+    "exposed-configuration.yaml": "a5292560ccb0128f37b1a81e4893782cbaff74f36c8e230a7b5d0e08c13c6f65",
+    "exposed-metrics.yaml": "786f26939f2ba165bc34a85035172f6447dccc0d8edd854c6ab79c317ec73347",
+    "api-docs-exposure.yaml": "b24fc865eae61b9e5187e2a9417d0179ec44ff06052a55390c4ae7176b3faf09",
+    "application-version-disclosure.yaml": "9ed55ea5b2ab7b271e1d11ad1157760af07b0ec0361e75a3801223d17b3ae63c"
+  }
+}

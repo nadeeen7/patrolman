@@ -1,0 +1,27 @@
+id: application-version-disclosure
+info:
+  name: Application Version Disclosure
+  author: patrolman
+  severity: info
+  description: "The application reveals its exact software version number, aiding attackers in researching specific known vulnerabilities for that version."
+  remediation: "Remove or restrict version disclosure endpoints to minimize information leakage."
+  classification:
+    cwe-id:
+      - CWE-200
+  tags: exposure,version,recon
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/rest/admin/application-version"
+    redirects: false
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - '"version"'
+          - 'version'
+        condition: or

@@ -1,0 +1,26 @@
+id: cors-wildcard
+info:
+  name: Permissive Cross-Origin Resource Sharing (CORS) Policy
+  author: patrolman
+  severity: low
+  description: "The web application returns Access-Control-Allow-Origin: * in its response headers, allowing any origin to read application responses."
+  remediation: Configure Access-Control-Allow-Origin to only allow explicitly trusted origins.
+  classification:
+    cwe-id:
+      - CWE-942
+  tags: misconfig,cors
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/"
+    redirects: false
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: header
+        words:
+          - "access-control-allow-origin: *"
+        case-insensitive: true

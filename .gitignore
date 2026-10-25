@@ -1,0 +1,51 @@
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Environment files & secrets
+.env
+.env.*
+.env*.local
+!.env.example
+
+# Local databases, evidence, logs, and process locks
+data/
+reports/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+*.log
+*.pid
+*.lock
+
+# Node.js & frontend builds
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Scanner tool binaries and runtime caches
+tools/
+httpx/
+subfinder/
+nuclei/
+gen_py/
+backups/
+scratch/
+
+# OS and editor artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/

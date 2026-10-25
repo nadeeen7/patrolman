@@ -1,0 +1,27 @@
+id: exposed-configuration
+info:
+  name: Application Configuration Exposure
+  author: patrolman
+  severity: medium
+  description: "The application configuration endpoint is accessible without authentication, disclosing internal application settings, server details, and features."
+  remediation: "Enforce strict authentication and authorization checks on administrative and configuration API endpoints."
+  classification:
+    cwe-id:
+      - CWE-200
+  tags: exposure,config,admin
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/rest/admin/application-configuration"
+    redirects: false
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - '"application":'
+          - '"config":'
+        condition: or

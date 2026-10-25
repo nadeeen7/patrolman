@@ -1,0 +1,42 @@
+{
+  "provider": "SyntheticOfflineProgram",
+  "program_id": "synthetic-web-001",
+  "source_url": "https://programs.example.test/synthetic-web-001",
+  "fixture": {
+    "version": "fixture-v1",
+    "assets": [
+      {
+        "asset_type": "domain",
+        "value": "scope.example.test",
+        "scope": "included"
+      },
+      {
+        "asset_type": "cidr",
+        "value": "192.0.2.0/24",
+        "scope": "included"
+      },
+      {
+        "asset_type": "path",
+        "value": "/admin",
+        "scope": "excluded"
+      },
+      {
+        "asset_type": "domain",
+        "value": "staging.example.test",
+        "scope": "excluded"
+      }
+    ],
+    "permitted_methods": [
+      "web_service_discovery",
+      "tls_audit"
+    ],
+    "prohibited_methods": [
+      "dos",
+      "exploit",
+      "active_crawl"
+    ],
+    "restrictions": [
+      "Synthetic data only; no external contact."
+    ]
+  }
+}

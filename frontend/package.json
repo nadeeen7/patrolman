@@ -1,0 +1,28 @@
+{
+  "name": "sentinel-assessment",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node -e \"if (!require('fs').existsSync('node_modules')) { console.error('\\n[PATROLMAN] Missing frontend dependencies. Please run `npm --prefix frontend install` once before starting.\\n'); process.exit(1); }\"",
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "axios": "^1.8.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/react": "^16.1.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "jsdom": "^26.0.0",
+    "tailwindcss": "^4.0.0",
+    "vite": "^6.0.0",
+    "vitest": "^4.1.11"
+  }
+}

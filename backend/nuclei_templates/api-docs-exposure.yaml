@@ -1,0 +1,27 @@
+id: api-docs-exposure
+info:
+  name: Interactive API Documentation Exposed
+  author: patrolman
+  severity: info
+  description: "Interactive Swagger / OpenAPI documentation is publicly exposed, providing complete visibility into API routes, parameter schemas, and structures."
+  remediation: "Disable or restrict access to interactive API documentation in non-development environments."
+  classification:
+    cwe-id:
+      - CWE-200
+  tags: exposure,api,swagger
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/api-docs/"
+    redirects: false
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        part: body
+        words:
+          - "swagger"
+          - "swagger-ui"
+        condition: or
