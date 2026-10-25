@@ -1,6 +1,6 @@
 # PATROLMAN — Automated Vulnerability Assessment Framework
 
-PATROLMAN is an automated, defensive vulnerability assessment orchestration platform engineered for native Windows environments. Developed as an academic software engineering and cybersecurity project, PATROLMAN enables security administrators to conduct authorized, multi-tool security assessments across web applications, network endpoints, and local codebases through an intuitive dashboard.
+PATROLMAN is an automated, defensive vulnerability assessment orchestration platform engineered for native Windows environments. Developed for academic software engineering and cybersecurity research, PATROLMAN enables security administrators to conduct authorized, multi-tool assessments across web applications, network endpoints, and local codebases through a unified, intuitive dashboard.
 
 > **Important Assessment Disclaimer:** Automated vulnerability scanners produce preliminary observations and potential findings. A scan reporting zero findings **does not prove that a target is secure or defect-free**. All scanner-generated results require human review and manual validation before remediation.
 
@@ -17,66 +17,21 @@ Running individual security scanners typically produces fragmented outputs, nois
 
 ---
 
-## 2. Key Features
+## 2. Integrated Assessment Tools
 
-- **Strict Authorization Engine**: Enforces explicit database-backed target authorizations, CIDR network validation, DNS revalidation subprocesses, and prohibited-method restrictions.
-- **Nine Integrated Security Scanners**: Automated port discovery, passive DNS enumeration, HTTP probing, technology fingerprinting, template-based vulnerability assessment, TLS auditing, web header analysis, secret leak detection, and dependency vulnerability scanning.
-- **Automated Evidence Redaction**: Built-in scrubbing engine masks sensitive passwords, Bearer tokens, cookies, API keys, and Authorization headers in all logs, database records, and reports.
-- **Native Windows Operation**: Runs directly on Windows 10 and 11 without requiring WSL, Docker, or Linux dependencies.
-- **Single-Page Dashboard**: Modern React interface supporting dark and light themes, real-time scan progress polling, finding inspection modals, and multi-format report exports.
+PATROLMAN implements integrations for **exactly nine tools**. Each tool operates only within its designated profile, target type, and authorization gate.
 
----
-
-## 3. Technology Stack
-
-- **Frontend**: React 19, Vite 6, Tailwind CSS v4, Lucide React icons.
-- **Backend**: Python 3.11–3.13, Flask 3.1, SQLAlchemy 2.0+, Werkzeug 3.1.
-- **Database**: SQLite 3 with Write-Ahead Logging (WAL) mode, foreign key constraints, and append-only audit trail triggers.
-- **Authentication**: Argon2id / bcrypt password hashing, HttpOnly `SameSite=Strict` session cookies, pre-session CSRF tokens, and client rate limiting.
-
----
-
-## 4. Architecture Overview
-
-PATROLMAN follows a decoupled, service-oriented architecture:
-
-```
-[ React 19 Single-Page App ] ──(REST API + CSRF)──> [ Flask Backend Service (Port 5055) ]
-                                                            │
-                 ┌──────────────────────────────────────────┴──────────────────────────────────────────┐
-                 ▼                                                                                     ▼
-      [ SQLite WAL Database ]                                                              [ Scan Orchestration Engine ]
-   - Administrator accounts & sessions                                                     - Single-worker FIFO queue
-   - Target authorizations & audit trail                                                   - Windows Job Object containment
-   - Scans, findings, assets, evidence                                                     - DNS revalidation & literal IP binding
-                                                                                                       │
-                                                 ┌─────────────────────────────────────────────────────┴──────────────────┐
-                                                 ▼                                                                        ▼
-                                     [ Network Assessment Tools ]                                             [ Local Assessment Tools ]
-                              (Nmap, Subfinder, HTTPX, WhatWeb, Nuclei, SSLyze, Wapiti)                          (Gitleaks, Trivy)
-```
-
-1. **Client Layer**: The browser communicates with Flask over JSON REST endpoints (`/api/*`). State-changing requests require a validated CSRF token (`X-CSRF-Token`).
-2. **Execution & Containment**: Assessments execute asynchronously in a background worker thread. Subprocesses are placed inside a Windows Job Object configured to terminate child processes cleanly on timeout or cancellation.
-3. **Evidence Normalization & Deduplication**: Raw outputs are parsed by dedicated adapters, sanitized by the redaction engine, deduplicated by canonical endpoint and issue fingerprint, and persisted to SQLite.
-
----
-
-## 5. Supported Assessment Tools
-
-PATROLMAN integrates **exactly nine tools**. Each tool operates only within its designated profile, target type, and authorization gate.
-
-| Tool | Simple purpose |
-| :--- | :--- |
-| **Nmap** | Discovers open TCP ports and determines active service version banners. |
-| **Subfinder** | Passively enumerates valid subdomains using external DNS sources without active querying. |
-| **HTTPX** | Probes discovered ports for active HTTP/HTTPS web services, status codes, and titles. |
-| **WhatWeb** | Identifies website technologies, CMS platforms, web servers, and embedded libraries. |
-| **Nuclei** | Scans web applications for security misconfigurations and CVEs using vetted, safe templates. |
-| **SSLyze** | Analyzes TLS/SSL cipher suites, protocols, and certificate validity on HTTPS endpoints. |
-| **Wapiti** | Audits web applications for missing security headers, cookie flags, and CSP gaps (opt-in safety gate). |
-| **Gitleaks** | Scans local source code directories for hardcoded secrets, private keys, and credentials. |
-| **Trivy** | Scans local filesystem dependencies and configuration files for known package vulnerabilities. |
+| Tool | Simple purpose | Status |
+| :--- | :--- | :--- |
+| **Nmap** | Discovers open TCP ports and determines active service version banners. | Core Network Tool |
+| **Subfinder** | Passively enumerates valid subdomains using external DNS sources without active querying. | Passive Reconnaissance |
+| **HTTPX** | Probes discovered ports for active HTTP/HTTPS web services, status codes, and titles. | Core Web Tool |
+| **WhatWeb** | Identifies website technologies, CMS platforms, web servers, and embedded libraries. | Technology Fingerprinting |
+| **Nuclei** | Scans web applications for security misconfigurations and CVEs using vetted, safe templates. | Vulnerability Scanner |
+| **SSLyze** | Analyzes TLS/SSL cipher suites, protocols, and certificate validity on HTTPS endpoints. | Cryptographic Auditor |
+| **Wapiti** | Audits web applications for missing security headers, cookie flags, and CSP gaps. | Gated Auditor (Opt-in) |
+| **Gitleaks** | Scans local source code directories for hardcoded secrets, private keys, and credentials. | Local Secret Scanner |
+| **Trivy** | Scans local filesystem dependencies and configuration files for known package vulnerabilities. | Local Dependency Scanner |
 
 > **Operational Note on Skipped Tools**: Tools are automatically marked `SKIPPED` when not applicable to the target type. For example, Subfinder is skipped when scanning a literal IP address (such as `127.0.0.1`), SSLyze is skipped for plain HTTP ports, and Gitleaks only executes during local directory scans.
 
@@ -85,93 +40,115 @@ Nikto is deliberately and permanently excluded from PATROLMAN. It was retired du
 
 ---
 
-## 6. Supported Assessment Profiles
+## 3. Supported Operating System & Prerequisites
 
-PATROLMAN organizes tool execution into four structured profiles:
+### Supported Environment
+- **Operating System**: Native Windows 10 (64-bit) or Windows 11. (WSL and Docker are not required).
 
-- **Quick**: Bounded network scan targeting four core web ports (80, 443, 8000, 8443) using Nmap, HTTPX, and WhatWeb. Fast service discovery and passive technology identification.
-- **Standard**: Common web and infrastructure ports using Nmap, Subfinder, HTTPX, WhatWeb, Nuclei, and SSLyze. Includes passive subdomain discovery, bundled safe Nuclei template checks, and TLS analysis.
-- **Comprehensive**: Expanded fixed port list using all enabled network tools (Nmap, Subfinder, HTTPX, WhatWeb, Nuclei, SSLyze, and Wapiti). Wapiti requires explicit operator opt-in (`AVA_WAPITI_ENABLED=true`).
-- **Local**: Filesystem source-code scan for approved local directories using Gitleaks and Trivy. Audits working-tree secrets, dependencies, and configuration files. Requires explicit path approval in `AVA_ALLOWED_LOCAL_ROOTS`.
-
----
-
-## 7. Prerequisites and Supported Operating System
-
-- **Operating System**: Windows 10 (64-bit) or Windows 11. (WSL and Docker are not required).
+### Core Runtime Dependencies
 - **Python**: Python 3.11 to 3.13 (Verified on Python 3.13.14).
 - **Node.js**: Node.js 18+ (Verified on Node.js v24.22.1) and npm 9+.
 - **Database**: SQLite 3.35+ (Included natively with Python; WAL mode enabled).
-- **External Scanner Binaries**:
-  - `nmap.exe`: Official Windows installation from nmap.org.
-  - `subfinder.exe`: ProjectDiscovery Windows AMD64 binary.
-  - `httpx.exe`: ProjectDiscovery Windows AMD64 binary.
-  - `whatweb`: Ruby script with native Ruby 3.x in `PATH`.
-  - `nuclei.exe`: ProjectDiscovery Windows AMD64 binary with bundled templates.
-  - `sslyze`: Python library installed in the virtual environment.
-  - `wapiti3`: Python library installed in the virtual environment.
-  - `gitleaks.exe`: Official Windows AMD64 binary.
-  - `trivy.exe`: Official Windows AMD64 binary.
+
+### External Scanner Binaries (Optional / Tool-Specific)
+PATROLMAN automatically detects available tools on your system `PATH` or configured paths:
+- `nmap.exe`: Official Windows installation from [nmap.org](https://nmap.org/).
+- `subfinder.exe`: ProjectDiscovery Windows AMD64 binary.
+- `httpx.exe`: ProjectDiscovery Windows AMD64 binary.
+- `whatweb`: Ruby script with native Ruby 3.x installed in `PATH`.
+- `nuclei.exe`: ProjectDiscovery Windows AMD64 binary with bundled templates.
+- `sslyze`: Python library installed in `.venv`.
+- `wapiti3`: Python library installed in `.venv`.
+- `gitleaks.exe`: Official Windows AMD64 binary.
+- `trivy.exe`: Official Windows AMD64 binary.
 
 ---
 
-## 8. Installation and Setup Instructions for Windows
+## 4. First-Time Installation and Setup
 
-Open a PowerShell terminal and navigate to the project directory:
+Follow these step-by-step commands in a PowerShell terminal:
 
-### Step 1: Create and Activate Virtual Environment
+### Step 1: Clone the GitHub Repository
+```powershell
+git clone https://github.com/nadeeen7/patrolman.git
+cd patrolman
+```
+
+### Step 2: Create and Activate Python Virtual Environment
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### Step 2: Install Python Dependencies
-Install the verified dependencies from the project requirement manifest:
+### Step 3: Install Python Dependencies
+Install all required packages from the project manifest:
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r python-dependencies.txt
 ```
-*(Alternatively, for core server dependencies only, use `requirements-lock.txt`).*
+*(For minimal server-only dependencies, you can alternatively use `requirements-lock.txt`).*
 
-### Step 3: Install Frontend Dependencies
+### Step 4: Install Frontend Dependencies
 ```powershell
 npm --prefix frontend install
 ```
 
-### Step 4: Initialize the Administrator Account
-Set up the first administrator account via the CLI management tool:
+### Step 5: Configure Environment Variables
+Create your local `.env` configuration file from the template:
+```powershell
+Copy-Item .env.example .env
+```
+
+The default `.env` includes safe settings for local development and testing:
+```ini
+AVA_ALLOWED_TARGETS=127.0.0.1
+AVA_ALLOW_PRIVATE_TARGETS=true
+AVA_REQUIRE_AUTHORIZED_TARGET=true
+AVA_PORT=5055
+AVA_DATA_DIR=data
+AVA_ALLOWED_LOCAL_ROOTS=C:\Projects\SampleApp
+AVA_WAPITI_ENABLED=false
+AVA_REGISTRATION_ENABLED=true
+AVA_TRUSTED_ORIGINS=http://127.0.0.1:5173
+```
+
+---
+
+## 5. Administrator Setup and Authentication
+
+PATROLMAN provides two straightforward ways to set up administrator accounts:
+
+### Method A: Command-Line Setup (Recommended for Initial Setup)
+You can create the primary administrator account while the backend is stopped:
 ```powershell
 .\.venv\Scripts\python.exe -m backend.admin setup
 ```
-Follow the hidden prompts to enter an administrator username (3–64 characters) and password (minimum 8 characters).
+- Enter an administrator username (3–64 characters; lowercase letters, numbers, hyphens, dots).
+- Enter a secure password (minimum 8 characters, maximum 1024).
+- Confirm the password.
 
----
-
-## 9. Environment Configuration
-
-Create a `.env` file in the project root with the following safe default settings:
-
+To recover or reset an administrator password in the future:
 ```powershell
-Set-Content -LiteralPath '.env' -Encoding utf8 -Value @(
-    "AVA_ALLOWED_TARGETS=127.0.0.1",
-    "AVA_ALLOW_PRIVATE_TARGETS=true",
-    "AVA_ALLOWED_LOCAL_ROOTS=C:\Projects\SampleApp",
-    "AVA_WAPITI_ENABLED=false",
-    "AVA_REGISTRATION_ENABLED=true",
-    "AVA_REQUIRE_AUTHORIZED_TARGET=true"
-)
+.\.venv\Scripts\python.exe -m backend.admin recover
 ```
 
-> **Security Note**: Never commit real credentials, passwords, or tokens to version control. The `.env` file is git-ignored by default. If configuring an optional external API Bearer token via `AVA_API_TOKEN`, the token must be at least 32 characters long.
+### Method B: Web UI Admin Sign Up
+If you start the backend before running the CLI setup, open `http://127.0.0.1:5173/` in your browser. The login screen will display **Admin Sign Up**. Enter your desired administrator credentials to create the account.
+
+### Registration Behavior & Controls
+- **Default State**: Self-registration is enabled (`AVA_REGISTRATION_ENABLED=true`), allowing initial administrator setup and additional administrators to register.
+- **Closing Registration**: In production or restricted lab environments, set `AVA_REGISTRATION_ENABLED=false` in `.env`. The backend rejects new registration attempts (`HTTP 403 registration_disabled`). Existing accounts and CLI recovery remain functional.
+- **Brute-Force Protection**: Login and registration are throttled to 5 attempts per 15-minute window per client IP and account, with a 15-minute lockout on exceeding.
+- **Session Security**: Sessions use server-side tokens, `HttpOnly` `SameSite=Strict` cookies, 30-minute idle expiration, 8-hour maximum lifetime, and pre-session CSRF tokens (`X-CSRF-Token`).
 
 ---
 
-## 10. Starting PATROLMAN
+## 6. Starting PATROLMAN
 
-### Method 1: Automated PowerShell Startup Script (Recommended)
+### Method 1: Using the PowerShell Startup Script (Recommended)
 ```powershell
 .\Start-Patrolman.ps1 -LoopbackTesting
 ```
-This script launches the backend, checks prerequisites, sets up process isolation, and restricts scope to loopback testing (`127.0.0.1`).
+This script launches the backend, sets up process containment, verifies environment variables, and restricts targets to loopback testing (`127.0.0.1`).
 
 ### Method 2: Manual Terminal Execution
 
@@ -187,13 +164,14 @@ npm --prefix frontend run dev
 
 ---
 
-## 11. Application URLs and Health Check
+## 7. Application URLs and Health Check
 
 - **Frontend Web UI**: `http://127.0.0.1:5173/`
 - **Backend API Base**: `http://127.0.0.1:5055/`
 - **Health Check Endpoint**: `http://127.0.0.1:5055/api/health`
 
-**Health Check Verification Command**:
+### Health Check Verification
+Verify that the backend is running and database connectivity is healthy:
 ```powershell
 curl http://127.0.0.1:5055/api/health
 ```
@@ -210,84 +188,118 @@ curl http://127.0.0.1:5055/api/health
 
 ---
 
-## 12. Assessment Workflow
+## 8. Target Registration & Scope Management
 
-1. **Log In**: Open `http://127.0.0.1:5173/` in your browser and sign in with your administrator credentials.
-2. **Authorize Target**: In the **Targets** tab, select or register an authorized scope (e.g., `127.0.0.1` for local OWASP Juice Shop).
-3. **Verify Target Scope**: Confirm target hostnames and CIDRs. Verify that prohibited methods (`dos`, `exploit`, `credential_attack`) remain blocked.
-4. **Launch Assessment**: In **New Assessment**, choose a profile (`Quick`, `Standard`, `Comprehensive`, or `Local`), select tools, and click **Start Assessment**.
-5. **Monitor Progress**: Watch real-time execution states and stage progress on the scan details page.
-6. **Inspect Findings**: Review discovered findings, confidence levels, and sanitized HTTP request/response evidence.
-7. **Export Reports**: Generate compliance reports in HTML, JSON, or PDF format.
+PATROLMAN strictly requires an active, unexpired target authorization before dispatching network scans. Adding a target in the UI establishes an audit trail of documented permission.
 
----
+> **Legal & Ethical Notice:** You must obtain explicit, written authorization from system owners before assessing any target. Adding a target into PATROLMAN does not grant legal authorization to scan it.
 
-## 13. Findings, Evidence, and Report Exports
-
-- **Finding Inspector**: Displays severity, status (`potential`, `confirmed`, `informational`, `inconclusive`), confidence (`scanner-reported`, `verified`), affected URL, and source provenance.
-- **Evidence Inspector**: Shows sanitized HTTP request and response pairs captured during scanning.
-- **Audit History**: Complete historical records stored in SQLite, surviving page refreshes and backend restarts.
-- **Supported Export Formats**:
-  - `GET /api/scans/:id/report?format=html`: Standalone HTML assessment report.
-  - `GET /api/scans/:id/report?format=json`: Machine-readable assessment data export.
-  - `GET /api/scans/:id/report?format=vulnerabilities`: Normalized vulnerability findings list.
-  - `GET /api/scans/:id/report?format=pdf`: Formatted PDF executive report.
+### How to Register an Authorized Target
+1. Log in to the web interface at `http://127.0.0.1:5173/`.
+2. Click **Targets** in the top navigation bar.
+3. Click the **Register Target** button to open the modal.
+4. Fill in the authorization fields:
+   - **Target Name**: Descriptive label (e.g., `OWASP Juice Shop Local Lab`).
+   - **Target Type**: Select `lab`, `organization`, `client`, or `bug_bounty`.
+   - **Owner / Organization**: System owner (e.g., `Local Security Lab`).
+   - **In-Scope Domains / Canonical IPs**: Target host or CIDR (e.g., `127.0.0.1` or `127.0.0.1/32`). Multiple entries can be entered one per line.
+   - **Permitted Methods**: Select allowed testing methods (e.g., `port_scan`, `web_audit`, `tls_audit`).
+   - **Prohibited Methods**: Keep `dos`, `exploit`, and `credential_attack` strictly checked as prohibited.
+   - **Authorization Validity**: Set the `Valid From` and `Valid To` dates.
+   - **Authorization Reference**: Provide an authorization tracking reference (e.g., `Lab Authorization Ref #JUICE-SHOP-2026`).
+5. Click **Save Authorization Profile**.
 
 ---
 
-## 14. Verification and Automated Testing
+## 9. Running a Test Assessment (OWASP Juice Shop)
+
+Follow this walkthrough to run a safe, bounded test assessment against a local OWASP Juice Shop instance:
+
+### Step 1: Start OWASP Juice Shop Locally
+Run Juice Shop on port 3000 using Docker or native Node.js:
+```powershell
+docker run --rm -p 3000:3000 bkimminich/juice-shop
+```
+Confirm Juice Shop is responding at `http://127.0.0.1:3000`.
+
+### Step 2: Launch the Assessment in PATROLMAN
+1. Navigate to **New Assessment** in PATROLMAN (`http://127.0.0.1:5173/`).
+2. Set **Target**: `http://127.0.0.1:3000` (or `127.0.0.1` with port 3000).
+   - PATROLMAN parses port `3000` and automatically appends it to Nmap's scan ports and designates it as a web service for HTTPX, WhatWeb, and Nuclei.
+3. Select an **Assessment Profile**:
+   - `Quick`: Fast TCP discovery and passive technology identification.
+   - `Standard` *(Recommended)*: Adds Nuclei template checks and TLS analysis.
+   - `Comprehensive`: Extended port checks and deep web auditing.
+   - `Local`: For filesystem scanning of local code directories (Gitleaks/Trivy).
+4. Select your desired tools (e.g., Nmap, HTTPX, WhatWeb, Nuclei).
+5. Check the required authorization confirmation checkbox: *"I confirm this assessment is strictly authorized."*
+6. Click **Start Assessment**.
+
+---
+
+## 10. Reviewing Findings, Evidence, History, and Reports
+
+- **Execution Monitor**: Real-time progress cards show tool status (`RUNNING`, `COMPLETED_WITH_FINDINGS`, `COMPLETED_WITHOUT_FINDINGS`, `SKIPPED`, `FAILED`).
+- **Findings Inspector**: Click on any finding to open the details modal. Inspect severity, confidence (`scanner-reported`, `verified`), CVSS vectors, remediation advice, and source tool.
+- **Evidence Inspector**: View sanitized HTTP request/response evidence pairs captured during scanning. Sensitive cookies, passwords, and tokens are automatically redacted.
+- **Scan History**: The **History** view persists past scans with search, filtering, and cross-scan comparisons.
+- **Exporting Reports**:
+  - `HTML Report`: Interactive standalone web report (`/api/scans/:id/report?format=html`).
+  - `JSON Report`: Machine-readable scan data export (`/api/scans/:id/report?format=json`).
+  - `Vulnerabilities JSON`: Dedicated findings list (`/api/scans/:id/report?format=vulnerabilities`).
+  - `PDF Report`: Formatted executive summary (`/api/scans/:id/report?format=pdf`).
+
+---
+
+## 11. Testing and Verification
+
+PATROLMAN maintains extensive automated test suites for both backend and frontend.
 
 ### Backend Automated Test Suite (pytest)
 ```powershell
 .\.venv\Scripts\python.exe -m pytest
 ```
-*Verification status: 654 passed, 2 skipped across all test modules (Verified October 2026).*
+*Verified Status: 654 passed, 2 skipped (offline DB / TLS loopback fixture) — October 2026.*
 
 ### Frontend Unit & Component Tests (Vitest)
 ```powershell
 npm --prefix frontend test
 ```
-*Verification status: 87 passed across 5 test suites (Verified October 2026).*
+*Verified Status: 87 passed across 5 test suites — October 2026.*
 
 ### Frontend Production Build (Vite)
 ```powershell
 npm --prefix frontend run build
 ```
-Generates production assets in `frontend/dist/`, which are served directly by Flask via `backend/app.py`.
+Generates production assets in `frontend/dist/`, which are served directly by Flask.
 
 ---
 
-## 15. Security Controls and Safe-Use Guidance
+## 12. Troubleshooting Common Issues
 
-- **Explicit Authorization Only**: Scans require an active, unexpired target authorization.
-- **Scope Enforcement**: Enforces CIDR boundaries and revalidates DNS records immediately before each tool invocation.
-- **Prohibited Methods Enforced**: Denial of service, exploit payloads, and credential attacks are rejected at both API and orchestrator levels.
-- **Credential Protection**: Redaction engine sanitizes secrets, tokens, passwords, and cookies before storage or export.
+| Symptom | Cause | Solution |
+| :--- | :--- | :--- |
+| **Port 5055 in use** | A previous PATROLMAN backend process is still running. | Run `Get-Process python` or `netstat -ano \| findstr :5055` and terminate the orphaned process. |
+| **Port 5173 in use** | An earlier Vite dev server is running. | Close conflicting terminal or run `npm --prefix frontend run dev -- --port 5174`. |
+| **Backend "Network Error"** | Backend stopped, initializing, or CORS origin blocked. | Check backend status at `http://127.0.0.1:5055/api/health` and verify `AVA_TRUSTED_ORIGINS`. |
+| **Tool marked `SKIPPED`** | Tool is not applicable to target type. | Subfinder skips literal IP targets; SSLyze skips plain HTTP endpoints. This is normal behavior. |
+| **Tool marked `BLOCKED_BY_POLICY`** | Windows AppLocker or WDAC blocked binary. | Consult your administrator to approve binary hash. **Never disable Windows Defender or execution policies.** |
+| **Out-of-Scope error (403)** | Target is not in authorized target database or `.env`. | Add target to `.env` (`AVA_ALLOWED_TARGETS`) and create an authorized target profile in the **Targets** tab. |
+| **Local scan fails** | Target directory is not in allowed roots. | Add exact folder path to `AVA_ALLOWED_LOCAL_ROOTS` in `.env`. |
+
+---
+
+## 13. Security Boundaries & Limitations
+
+- **Single-Administrator Deployment**: Designed for local execution by trusted security administrators. Not architected as a multi-tenant public SaaS.
+- **Unauthenticated Web Crawling**: Assesses accessible endpoints; deep crawling behind complex Single-Sign-On (SSO) or multi-factor authentication (MFA) is not supported.
+- **Passive Subdomain Enumeration**: Subfinder relies on external passive intelligence and does not perform active brute-force DNS resolution.
+- **Trivy Offline Mode**: Vulnerability scanning requires an offline vulnerability database pre-cached on the system.
 - **Detailed Security Policy**: For full details on authentication safeguards, CSRF tokens, session handling, and responsible disclosure, see [SECURITY.md](SECURITY.md).
 
 ---
 
-## 16. Limitations and Troubleshooting
-
-### Common Troubleshooting Solutions
-| Symptom | Cause | Solution |
-| :--- | :--- | :--- |
-| **Port 5055 in use** | An earlier backend process is still running. | Run `Get-Process python` or `netstat -ano \| findstr :5055` and terminate the orphaned process. |
-| **Port 5173 in use** | An earlier Vite server is running. | Close conflicting terminal or run `npm --prefix frontend run dev -- --port 5174`. |
-| **Backend Network Error** | Backend is stopped, initializing, or CORS origin is blocked. | Verify backend at `http://127.0.0.1:5055/api/health` and verify `AVA_TRUSTED_ORIGINS`. |
-| **Tool marked `SKIPPED`** | Incompatible target type. | Subfinder skips literal IP addresses; SSLyze skips plain HTTP endpoints. |
-| **Tool marked `BLOCKED_BY_POLICY`** | Windows AppLocker or WDAC blocked execution. | Consult your administrator to approve binary hash. **Never disable Windows Defender or execution policies.** |
-| **Local scan fails** | Target directory is not allowlisted. | Add exact folder path to `AVA_ALLOWED_LOCAL_ROOTS` in `.env`. |
-
-### Important System Limitations
-- **Single-Administrator Deployment**: Designed for local use by trusted administrators, not as a public multi-tenant SaaS.
-- **Unauthenticated Crawling**: Assesses accessible endpoints; deep crawling behind complex Single-Sign-On (SSO) or multi-factor authentication (MFA) is not supported.
-- **Passive Subdomain Enumeration**: Subfinder relies on external passive intelligence and does not perform active brute-force DNS resolution.
-- **Trivy Offline Mode**: Vulnerability scanning requires an offline vulnerability database pre-cached on the system.
-
----
-
-## 17. Project Status and Disclaimer
+## 14. Project Status and Disclaimer
 
 This project is developed for academic evaluation and authorized vulnerability assessment research.
 
